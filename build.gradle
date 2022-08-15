@@ -2,19 +2,34 @@ plugins {
     id 'java'
 }
 
-group 'org.example'
-version '1.0-SNAPSHOT'
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+group 'ru.obvilion'
+version '0.1.0'
 
 repositories {
     mavenCentral()
+    maven { url "https://jitpack.io" }
+}
+
+configurations {
+    extraLibs
 }
 
 dependencies {
-    compile 'org.scala-sbt.ipcsocket:ipcsocket:1.1.0'
+    implementation 'com.github.ObvilionNetwork:JSONLib:1.0'
+    implementation 'com.kohlschutter.junixsocket:junixsocket-common:2.5.1'
+
+    extraLibs 'com.github.ObvilionNetwork:JSONLib:1.0'
+    extraLibs 'com.kohlschutter.junixsocket:junixsocket-common:2.5.1'
 }
 
 jar {
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.extraLibs.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
