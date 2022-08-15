@@ -28,11 +28,11 @@ public abstract class Pipe {
         this.callbacks = callbacks;
     }
 
-    public static Pipe openPipe(DiscordRPC discordRPC, long clientId, HashMap<String,Callback> callbacks,
+    public static Pipe openPipe(DiscordRPC discordRPC, String clientId, HashMap<String,Callback> callbacks,
                                 DiscordBuild... preferredOrder) throws NoDiscordException {
 
-        if(preferredOrder == null || preferredOrder.length == 0)
-            preferredOrder = new DiscordBuild[]{DiscordBuild.ANY};
+        if (preferredOrder == null || preferredOrder.length == 0)
+            preferredOrder = new DiscordBuild[]{ DiscordBuild.ANY };
 
         Pipe pipe = null;
 
@@ -45,7 +45,7 @@ public abstract class Pipe {
                 String location = getPipeLocation(i);
                 pipe = createPipe(discordRPC, callbacks, location);
 
-                pipe.send(Packet.OpCode.HANDSHAKE, new JSONObject().put("v", VERSION).put("client_id", Long.toString(clientId)), null);
+                pipe.send(Packet.OpCode.HANDSHAKE, new JSONObject().put("v", VERSION).put("client_id", clientId), null);
 
                 Packet p = pipe.read(); // this is a valid client at this point
 
@@ -123,29 +123,19 @@ public abstract class Pipe {
     private static Pipe createPipe(DiscordRPC discordRPC, HashMap<String, Callback> callbacks, String location) {
         String osName = System.getProperty("os.name").toLowerCase();
 
-        if (osName.contains("win"))
-        {
+        if (osName.contains("win")) {
             return new WindowsPipe(discordRPC, callbacks, location);
         }
-        else if (osName.contains("linux") || osName.contains("mac"))
-        {
-            try {
-                return new UnixPipe(discordRPC, callbacks, location);
-            }
-            catch (IOException e)
-            {
-                throw new RuntimeException(e);
-            }
-        }
-        else
-        {
-            throw new RuntimeException("Unsupported OS: " + osName);
+
+        try {
+            return new UnixPipe(discordRPC, callbacks, location);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
     public void send(Packet.OpCode op, JSONObject data, Callback callback) {
-        try
-        {
+        try {
             String nonce = generateNonce();
             Packet p = new Packet(op, data.put("nonce",nonce));
             if(callback!=null && !callback.isEmpty())
@@ -154,9 +144,7 @@ public abstract class Pipe {
 
             if(listener != null)
                 listener.onPacketSent(discordRPC, p);
-        }
-        catch(IOException ex)
-        {
+        } catch(IOException ex) {
             status = PipeStatus.DISCONNECTED;
         }
     }

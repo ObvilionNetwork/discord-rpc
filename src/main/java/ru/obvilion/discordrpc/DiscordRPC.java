@@ -15,13 +15,17 @@ import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 
 public final class DiscordRPC implements Closeable {
-    private final long clientId;
+    private final String clientId;
     private final HashMap<String, Callback> callbacks = new HashMap<>();
     private volatile Pipe pipe;
     private DiscordRPCListener listener = null;
     private Thread readThread = null;
 
     public DiscordRPC(long clientId) {
+        this.clientId = clientId + "";
+    }
+
+    public DiscordRPC(String clientId) {
         this.clientId = clientId;
     }
 
@@ -107,6 +111,7 @@ public final class DiscordRPC implements Closeable {
         NULL(false), // used for confirmation
         READY(false),
         ERROR(false),
+
         ACTIVITY_JOIN(true),
         ACTIVITY_SPECTATE(true),
         ACTIVITY_JOIN_REQUEST(true),
@@ -134,6 +139,7 @@ public final class DiscordRPC implements Closeable {
                 }
             }
 
+            System.out.println(str);
             return UNKNOWN;
         }
     }
@@ -142,6 +148,7 @@ public final class DiscordRPC implements Closeable {
     private void checkConnected(boolean connected) {
         if (connected && getStatus() != PipeStatus.CONNECTED)
             throw new IllegalStateException(String.format("IPCClient (ID: %d) is not connected!", clientId));
+
         if (!connected && getStatus() == PipeStatus.CONNECTED)
             throw new IllegalStateException(String.format("IPCClient (ID: %d) is already connected!", clientId));
     }
@@ -154,33 +161,30 @@ public final class DiscordRPC implements Closeable {
                     JSONObject json = p.getJson();
                     Event event = Event.of(json.optString("evt", null));
                     String nonce = json.optString("nonce", null);
+
+                    System.out.println(json.toString());
+
+                    // Получаем ответ на последнюю команду от RPC
                     switch (event) {
+                        // ОК
                         case NULL:
                             if (nonce != null && callbacks.containsKey(nonce))
                                 callbacks.remove(nonce).succeed(p);
                             break;
 
+                        // ОШИБКА
                         case ERROR:
                             if (nonce != null && callbacks.containsKey(nonce))
                                 callbacks.remove(nonce).fail(json.getJSONObject("data").optString("message", null));
                             break;
-
-                        case ACTIVITY_JOIN:
-                            break;
-
-                        case ACTIVITY_SPECTATE:
-                            break;
-
-                        case ACTIVITY_JOIN_REQUEST:
-                            break;
-
-                        case UNKNOWN:
-                            break;
                     }
+
+                    // DISPATCH указывает на то, что дискорд отправил один из ивентов
                     if (listener != null && json.has("cmd") && json.getString("cmd").equals("DISPATCH")) {
                         try {
                             JSONObject data = json.getJSONObject("data");
-                            switch (Event.of(json.getString("evt"))) {
+
+                            switch (event) {
                                 case ACTIVITY_JOIN:
                                     listener.onActivityJoin(this, data.getString("secret"));
                                     break;
@@ -194,16 +198,19 @@ public final class DiscordRPC implements Closeable {
                                     User user = new User(
                                             u.getString("username"),
                                             u.getString("discriminator"),
-                                            Long.parseLong(u.getString("id")),
+                                            u.getString("id"),
                                             u.optString("avatar", null)
                                     );
+
                                     listener.onActivityJoinRequest(this, data.optString("secret", null), user);
                                     break;
                             }
-                        } catch (Exception e) {
+                        } catch (Exception ignored) {
+
                         }
                     }
                 }
+
                 pipe.setStatus(PipeStatus.DISCONNECTED);
 
                 if (listener != null) {
@@ -211,6 +218,7 @@ public final class DiscordRPC implements Closeable {
                 }
             } catch (IOException ex) {
                 pipe.setStatus(PipeStatus.DISCONNECTED);
+
                 if (listener != null) {
                     listener.onDisconnect(this, ex);
                 }
