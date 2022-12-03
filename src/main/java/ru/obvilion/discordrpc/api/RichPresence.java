@@ -163,7 +163,10 @@ public class RichPresence {
         }
 
         public Builder addButton(String label, String url) {
-            this.buttons.put(new JSONObject().put("label", label).put("url", url));
+            this.buttons.put(new JSONObject()
+                    .put("label", label)
+                    .put("url", url));
+
             return this;
         }
     }

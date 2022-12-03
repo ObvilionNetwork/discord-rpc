@@ -38,11 +38,13 @@ public class UnixPipe extends Pipe {
             } catch(InterruptedException ignored) {}
         }
 
-        if(status==PipeStatus.DISCONNECTED)
+        if (status == PipeStatus.DISCONNECTED) {
             throw new IOException("Disconnected!");
+        }
 
-        if(status==PipeStatus.CLOSED)
+        if (status == PipeStatus.CLOSED) {
             return new Packet(Packet.OpCode.CLOSE, null);
+        }
 
         // Read the op and length. Both are signed ints
         byte[] d = new byte[8];
@@ -55,21 +57,22 @@ public class UnixPipe extends Pipe {
         is.read(d);
         Packet p = new Packet(op, new JSONObject(new String(d)));
 
-        if(listener != null)
+        if (listener != null) {
             listener.onPacketReceived(discordRPC, p);
+        }
+
         return p;
     }
 
     @Override
-    public void write(byte[] b) throws IOException
-    {
+    public void write(byte[] b) throws IOException {
         socket.getOutputStream().write(b);
     }
 
     @Override
-    public void close() throws IOException
-    {
+    public void close() throws IOException {
         send(Packet.OpCode.CLOSE, new JSONObject(), null);
+
         status = PipeStatus.CLOSED;
         socket.close();
     }

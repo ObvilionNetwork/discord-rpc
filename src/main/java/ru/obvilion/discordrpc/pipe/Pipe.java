@@ -38,10 +38,8 @@ public abstract class Pipe {
 
         // store some files so we can get the preferred client
         Pipe[] open = new Pipe[DiscordBuild.values().length];
-        for(int i = 0; i < 10; i++)
-        {
-            try
-            {
+        for (int i = 0; i < 10; i++) {
+            try {
                 String location = getPipeLocation(i);
                 pipe = createPipe(discordRPC, callbacks, location);
 
@@ -94,18 +92,19 @@ public abstract class Pipe {
                     break;
                 }
             }
-            if(pipe == null)
-            {
+
+            if (pipe == null) {
                 throw new NoDiscordException();
             }
         }
+
         // close unused files, except skip 'any' because its always a duplicate
-        for(int i = 0; i < open.length; i++)
-        {
-            if(i == DiscordBuild.ANY.ordinal())
+        for (int i = 0; i < open.length; i++) {
+            if (i == DiscordBuild.ANY.ordinal()) {
                 continue;
-            if(open[i] != null)
-            {
+            }
+
+            if (open[i] != null) {
                 try {
                     open[i].close();
                 } catch(IOException ex) {
@@ -138,12 +137,16 @@ public abstract class Pipe {
         try {
             String nonce = generateNonce();
             Packet p = new Packet(op, data.put("nonce",nonce));
-            if(callback!=null && !callback.isEmpty())
+
+            if (callback != null && !callback.isEmpty()) {
                 callbacks.put(nonce, callback);
+            }
+
             write(p.toBytes());
 
-            if(listener != null)
+            if (listener != null) {
                 listener.onPacketSent(discordRPC, p);
+            }
         } catch(IOException ex) {
             status = PipeStatus.DISCONNECTED;
         }
