@@ -162,8 +162,6 @@ public final class DiscordRPC implements Closeable {
                     Event event = Event.of(json.optString("evt", null));
                     String nonce = json.optString("nonce", null);
 
-                    System.out.println(json.toString());
-
                     // Получаем ответ на последнюю команду от RPC
                     switch (event) {
                         // ОК
