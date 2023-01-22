@@ -65,6 +65,28 @@ public final class DiscordRPC implements Closeable {
                         .put("activity", presence == null ? null : presence.toJson())), callback);
     }
 
+    public void acceptAskToJoin(long id) {
+        acceptAskToJoin(Long.toString(id));
+    }
+
+    public void acceptAskToJoin(String id) {
+        pipe.send(OpCode.FRAME, new JSONObject()
+                .put("cmd", "SEND_ACTIVITY_JOIN_INVITE")
+                .put("args", new JSONObject()
+                        .put("user_id", id)), null);
+    }
+
+    public void rejectAskToJoin(long id) {
+        rejectAskToJoin(Long.toString(id));
+    }
+
+    public void rejectAskToJoin(String id) {
+        pipe.send(OpCode.FRAME, new JSONObject()
+                .put("cmd", "CLOSE_ACTIVITY_REQUEST")
+                .put("args", new JSONObject()
+                        .put("user_id", id)), null);
+    }
+
     public void subscribe(Event sub) {
         subscribe(sub, null);
     }
